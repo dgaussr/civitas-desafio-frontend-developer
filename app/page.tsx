@@ -1,65 +1,149 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Neighborhood, AirQualityLevel } from '@/types/air-quality';
+import { NeighborhoodsList } from '@/components/neighborhoods-list';
+import { Filters } from '@/components/filters';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Wind, List, Map } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const InteractiveMap = lazy(() => import('@/components/interactive-map').then(mod => ({ default: mod.InteractiveMap })));
 
 export default function Home() {
+  const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [zone, setZone] = useState('all');
+  const [qualityLevel, setQualityLevel] = useState<AirQualityLevel | 'all'>('all');
+
+  useEffect(() => {
+    fetchNeighborhoods();
+  }, [zone, qualityLevel]);
+
+  const fetchNeighborhoods = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (zone !== 'all') params.append('zone', zone);
+      if (qualityLevel !== 'all') params.append('qualityLevel', qualityLevel);
+
+      const response = await fetch(`/api/neighborhoods?${params.toString()}`);
+      const data = await response.json();
+      setNeighborhoods(data);
+    } catch (error) {
+      console.error('Error fetching neighborhoods:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const stats = {
+    total: neighborhoods.length,
+    good: neighborhoods.filter(n => n.currentQuality === 'good').length,
+    moderate: neighborhoods.filter(n => n.currentQuality === 'moderate').length,
+    unhealthy: neighborhoods.filter(n => n.currentQuality === 'unhealthy').length,
+    hazardous: neighborhoods.filter(n => n.currentQuality === 'hazardous').length,
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-background">
+      <header className="border-b">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center gap-3">
+            <Wind className="w-8 h-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold">Painel de Qualidade do Ar</h1>
+              <p className="text-muted-foreground">Cidade do Rio de Janeiro</p>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Total de Bairros</CardDescription>
+              <CardTitle className="text-3xl">{stats.total}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Bom</CardDescription>
+              <CardTitle className="text-3xl text-green-600">{stats.good}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Moderado</CardDescription>
+              <CardTitle className="text-3xl text-yellow-600">{stats.moderate}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Ruim</CardDescription>
+              <CardTitle className="text-3xl text-orange-600">{stats.unhealthy}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Péssimo</CardDescription>
+              <CardTitle className="text-3xl text-purple-900">{stats.hazardous}</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
+            <CardDescription>
+              Filtre os bairros por zona e nível de qualidade do ar
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Filters
+              zone={zone}
+              qualityLevel={qualityLevel}
+              onZoneChange={setZone}
+              onQualityLevelChange={setQualityLevel}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          </CardContent>
+        </Card>
+
+        <Tabs defaultValue="list" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="list">
+              <List className="w-4 h-4 mr-2" />
+              Lista
+            </TabsTrigger>
+            <TabsTrigger value="map">
+              <Map className="w-4 h-4 mr-2" />
+              Mapa
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="list" className="mt-6">
+            <NeighborhoodsList neighborhoods={neighborhoods} loading={loading} />
+          </TabsContent>
+
+          <TabsContent value="map" className="mt-6">
+            {loading ? (
+              <Skeleton className="w-full h-[600px] rounded-lg" />
+            ) : (
+              <Suspense fallback={<Skeleton className="w-full h-[600px] rounded-lg" />}>
+                <InteractiveMap neighborhoods={neighborhoods} />
+              </Suspense>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
+
+      <footer className="border-t mt-12">
+        <div className="container mx-auto px-4 py-6 text-center text-muted-foreground">
+          <p>© 2025 Prefeitura do Rio de Janeiro - Painel de Qualidade do Ar</p>
+        </div>
+      </footer>
     </div>
   );
 }
