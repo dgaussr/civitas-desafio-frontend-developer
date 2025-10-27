@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, lazy, Suspense } from 'react';
+import Image from 'next/image';
 import { Neighborhood, AirQualityLevel } from '@/types/air-quality';
 import { NeighborhoodsList } from '@/components/neighborhoods-list';
 import { Filters } from '@/components/filters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wind, List, Map } from 'lucide-react';
+import { List, Map } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const InteractiveMap = lazy(() => import('@/components/interactive-map').then(mod => ({ default: mod.InteractiveMap })));
@@ -51,7 +52,14 @@ export default function Home() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-3">
-            <Wind className="w-8 h-8 text-primary" />
+            <Image
+              src="/images/prefeitura-rio-logo.png"
+              alt="Prefeitura do Rio de Janeiro"
+              width={60}
+              height={120}
+              className="object-contain"
+              priority
+            />
             <div>
               <h1 className="text-3xl font-bold">Painel de Qualidade do Ar</h1>
               <p className="text-muted-foreground">Cidade do Rio de Janeiro</p>
