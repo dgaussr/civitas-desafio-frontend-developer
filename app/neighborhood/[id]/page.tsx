@@ -20,25 +20,26 @@ export default function NeighborhoodPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchNeighborhood = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/neighborhoods/${params.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setNeighborhood(data);
+        } else {
+          console.error('Neighborhood not found');
+        }
+      } catch (error) {
+        console.error('Error fetching neighborhood:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
     fetchNeighborhood();
   }, [params.id]);
-
-  const fetchNeighborhood = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/neighborhoods/${params.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setNeighborhood(data);
-      } else {
-        console.error('Neighborhood not found');
-      }
-    } catch (error) {
-      console.error('Error fetching neighborhood:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   if (loading) {
     return (

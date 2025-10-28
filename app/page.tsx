@@ -19,25 +19,26 @@ export default function Home() {
   const [qualityLevel, setQualityLevel] = useState<AirQualityLevel | 'all'>('all');
 
   useEffect(() => {
+    const fetchNeighborhoods = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (zone !== 'all') params.append('zone', zone);
+        if (qualityLevel !== 'all') params.append('qualityLevel', qualityLevel);
+  
+        const response = await fetch(`/api/neighborhoods?${params.toString()}`);
+        const data = await response.json();
+        setNeighborhoods(data);
+      } catch (error) {
+        console.error('Error fetching neighborhoods:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
     fetchNeighborhoods();
   }, [zone, qualityLevel]);
-
-  const fetchNeighborhoods = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (zone !== 'all') params.append('zone', zone);
-      if (qualityLevel !== 'all') params.append('qualityLevel', qualityLevel);
-
-      const response = await fetch(`/api/neighborhoods?${params.toString()}`);
-      const data = await response.json();
-      setNeighborhoods(data);
-    } catch (error) {
-      console.error('Error fetching neighborhoods:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   const stats = {
     total: neighborhoods.length,

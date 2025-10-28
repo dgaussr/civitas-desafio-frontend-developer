@@ -1,5 +1,5 @@
 import { Neighborhood, AirQualityMeasurement } from '@/types/air-quality';
-import { getAQILevel, calculateAQI } from './air-quality-utils';
+import { getAQILevel } from './air-quality-utils';
 
 function generateMeasurements(baseAQI: number, days: number = 7): AirQualityMeasurement[] {
   const measurements: AirQualityMeasurement[] = [];
